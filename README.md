@@ -18,7 +18,7 @@
 ## FEATURES OF APPLICATION
 
 ## Retrive the Bus Information:
-     * Selenium is a powerful tool for automating web browsers, which is especially useful for web scraping tasks. If you want to retrieve bus details from RedBus, 
+      Selenium is a powerful tool for automating web browsers, which is especially useful for web scraping tasks. If you want to retrieve bus details from RedBus, 
      you can use Selenium to automate the process of searching for buses and extracting the relevant information. This involves interacting with web elements 
      like input fields and buttons, waiting for the page to load, and extracting the desired details from the search results.
 
