@@ -94,405 +94,449 @@ if web=="Home":
     slt.subheader(":blue[Developed-by:]  Kavitha Thangavel")
 
 # States and Routes page setting
-if web=="📍States and Routes":    
-    S=slt.selectbox("Lists of States",["Kerala","Adhra Pradesh","Telugana","Goa",
-                                    "Rajastan","South Bengal","Haryana","Assam","Utrra Pradesh","West Bengal"])
+if web == "📍States and Routes":
+    S = slt.selectbox("Lists of States", ["Kerala", "Adhra Pradesh", "Telugana", "Goa", "Rajastan", 
+                                          "South Bengal", "Haryana", "Assam", "Uttar Pradesh", "West Bengal"])
     
-    select_fare=slt.radio("choose bus fare range",("50-1000","1000-2000","2000 and above")) 
+    col1,col2=slt.columns(2)
+    with col1:
+        select_type = slt.radio("Choose bus type", ("sleeper", "semi-sleeper", "others"))
+    with col2:
+        select_fare = slt.radio("Choose bus fare range", ("50-1000", "1000-2000", "2000 and above"))
+
 
     # Kerala bus fare filtering
-    if S=="Kerala":
-        K=slt.selectbox("list of routes",lists_k)
+    if S == "Kerala":
+        K = slt.selectbox("List of routes",lists_k)
 
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{K}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-         
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{K}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  # assuming a high max value for "2000 and above"
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{K}"
-                                order by Price desc '''
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{K}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-    
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare(select_type, select_fare)
+        slt.dataframe(df_result)
+
     # Adhra Pradesh bus fare filtering
     if S=="Adhra Pradesh":
         A=slt.selectbox("list of routes",lists_A)
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{A}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{A}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_A(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{A}"
-                                order by Price desc '''
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
+
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{A}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_A(select_type, select_fare)
+        slt.dataframe(df_result)
+          
 
     # Telugana bus fare filtering
     if S=="Telugana":
         T=slt.selectbox("list of routes",lists_T)
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{T}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{T}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_T(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{T}"
-                                order by Price desc '''
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
+
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{T}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_T(select_type, select_fare)
+        slt.dataframe(df_result)
 
     # Goa bus fare filtering
     if S=="Goa":
         G=slt.selectbox("list of routes",lists_g)
 
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_G(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{G}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{G}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{G}"
-                                order by Price desc '''
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{G}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_G(select_type, select_fare)
+        slt.dataframe(df_result)
 
     # Rajastan bus fare filtering
     if S=="Rajastan":
         R=slt.selectbox("list of routes",lists_R)
 
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_R(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{R}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{R}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{R}"
-                                order by Price desc '''
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{R}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_R(select_type, select_fare)
+        slt.dataframe(df_result)
+          
 
     # South Bengal bus fare filtering       
     if S=="South Bengal":
         SB=slt.selectbox("list of rotes",lists_SB)
-        
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{SB}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{SB}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_SB(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{SB}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
 
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{SB}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
+            my_cursor.execute(query)
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_SB(select_type, select_fare)
+        slt.dataframe(df_result)
+    
     # Haryana bus fare filtering
     if S=="Haryana":
         H=slt.selectbox("list of rotes",lists_H)
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{H}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{H}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_H(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{H}"
-                                order by Price desc '''
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
+
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{A}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_H(select_type, select_fare)
+        slt.dataframe(df_result)
+
 
     # Assam bus fare filtering
     if S=="Assam":
         AS=slt.selectbox("list of rotes",lists_AS)
 
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_AS(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{AS}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{AS}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{AS}"
-                                order by Price desc '''
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{AS}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_AS(select_type, select_fare)
+        slt.dataframe(df_result)
 
     # Utrra Pradesh bus fare filtering
     if S=="Utrra Pradesh":
         UP=slt.selectbox("list of rotes",lists_UP)
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{UP}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{UP}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_UP(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{UP}"
-                                order by Price desc '''
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
+
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{UP}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
-    
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_UP(select_type, select_fare)
+        slt.dataframe(df_result)
+
     # West Bengal bus fare filtering
     if S=="West Bengal":
         WB=slt.selectbox("list of rotes",lists_WB)
 
-        if select_fare=="50-1000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
+        def type_and_fare_WB(bus_type, fare_range):
+            conn = mysql.connector.connect(host="localhost", user="root", password="kavi", database="RED_BUS_DETAILS")
             my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 50 and 1000 and Route_name="{WB}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df)
-               
-        if select_fare=="1000-2000":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price Between 1000 and 2000 and Route_name="{WB}"
-                                order by Price desc '''
-            my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            # Define fare range based on selection
+            if fare_range == "50-1000":
+                fare_min, fare_max = 50, 1000
+            elif fare_range == "1000-2000":
+                fare_min, fare_max = 1000, 2000
+            else:
+                fare_min, fare_max = 2000, 100000  
 
-        if select_fare=="2000 and above":
-            conn=mysql.connector.connect(host="localhost", user="root", password="kavi",database="RED_BUS_DETAILS")
-            my_cursor = conn.cursor()
-            query=f'''select * from bus_details 
-                                where Price > 2000 and Route_name="{WB}"
-                                order by Price desc '''
+            # Define bus type condition
+            if bus_type == "sleeper":
+                bus_type_condition = "Bus_type LIKE '%Sleeper%'"
+            elif bus_type == "semi-sleeper":
+                bus_type_condition = "Bus_type LIKE '%A/c Semi Sleeper %'"
+            else:
+                bus_type_condition = "Bus_type NOT LIKE '%Sleeper%' AND Bus_type NOT LIKE '%Semi-Sleeper%'"
+
+            query = f'''
+                SELECT * FROM bus_details 
+                WHERE Price BETWEEN {fare_min} AND {fare_max}
+                AND Route_name = "{WB}"
+                AND {bus_type_condition}
+                ORDER BY Price DESC
+            '''
             my_cursor.execute(query)
-            out=my_cursor.fetchall()
-            df=pd.DataFrame(out,columns=["ID","Bus_name","Bus_type","Start_time","End_time","Total_duration",
-                                            "Price","Seats_Available","Ratings","Route_link","Route_name"])
-            slt.write(df) 
+            out = my_cursor.fetchall()
+            conn.close()
+
+            df = pd.DataFrame(out, columns=[
+                "ID", "Bus_name", "Bus_type", "Start_time", "End_time", "Total_duration",
+                "Price", "Seats_Available", "Ratings", "Route_link", "Route_name"
+            ])
+            return df
+
+        df_result = type_and_fare_WB(select_type, select_fare)
+        slt.dataframe(df_result)
+
+
 
