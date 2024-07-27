@@ -36,7 +36,8 @@
 * import datetime
 * from streamlit_option_menu import option_menu
 * from selenium import webdriver
-"C:\Users\Kavitha\Desktop\CAPSTONE PROJECT\redbus\selenium_redbus project files\streamlitapp.png"
+![image](https://github.com/user-attachments/assets/eaf23fea-842b-491f-80bd-27342b4d0e8e)
+
 
  
      
